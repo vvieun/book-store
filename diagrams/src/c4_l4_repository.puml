@@ -1,0 +1,170 @@
+@startuml c4_l4_repository
+title C4 L4 — Компонент доступа к данным: JPA Entity Model + Repository
+
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam packageStyle rectangle
+
+package "Persistence Model" #EBF5FB {
+
+    class User {
+        - userId : Long
+        - username : String
+        - email : String
+        - passwordHash : String
+        - createdAt : LocalDateTime
+    }
+
+    class Book {
+        - isbn : String <<PK>>
+        - title : String
+        - price : BigDecimal
+        - description : String
+        - pages : Integer
+        - publicationDate : LocalDate
+        - avgRating : Double
+        - ratingCount : Integer
+        - createdAt : LocalDateTime
+        - publisher : Publisher
+        - authors : Set<Author>
+        - categories : Set<Category>
+    }
+
+    class Author {
+        - authorId : Long
+        - name : String
+        - biography : String
+        - country : String
+    }
+
+    class Category {
+        - categoryId : Long
+        - name : String
+        - description : String
+    }
+
+    class Publisher {
+        - publisherId : Long
+        - name : String
+        - country : String
+        - website : String
+    }
+
+    class Review {
+        - reviewId : Long
+        - rating : Integer
+        - comment : String
+        - createdAt : LocalDateTime
+        - user : User
+        - book : Book
+    }
+
+    class Order {
+        - orderId : Long
+        - totalAmount : BigDecimal
+        - status : String
+        - createdAt : LocalDateTime
+        - user : User
+        - items : List<OrderItem>
+    }
+
+    class OrderItem {
+        - orderItemId : Long
+        - quantity : Integer
+        - price : BigDecimal
+        - order : Order
+        - book : Book
+    }
+
+    class Wishlist {
+        - wishlistId : Long
+        - addedAt : LocalDateTime
+        - user : User
+        - book : Book
+    }
+
+    class ReadingHistory {
+        - historyId : Long
+        - readAt : LocalDateTime
+        - progressPercent : Integer
+        - user : User
+        - book : Book
+    }
+}
+
+
+package "Repository Layer (Spring Data JPA)" #E9F7EF {
+
+    interface "JpaRepository<T,ID>" as JpaRepo {
+        + findAll() : List<T>
+        + findById(id: ID) : Optional<T>
+        + save(entity: T) : T
+        + deleteById(id: ID) : void
+    }
+
+    interface BookRepository {
+        + findByIsbnWithDetails(isbn: String) : Book
+        + findByCategoryId(categoryId: Long) : List<Book>
+        + findByAuthorId(authorId: Long) : List<Book>
+        + findTopRatedBooks(minRating: Double, p: Pageable) : List<Book>
+        + findMostReviewedBooks(p: Pageable) : List<Book>
+        + searchBooks(query: String, p: Pageable) : List<Book>
+    }
+
+    interface ReviewRepository {
+        + findByUserUserId(userId: Long) : List<Review>
+        + findByBookIsbn(isbn: String) : List<Review>
+        + findByUserIdAndBookIsbn(uid: Long, isbn: String) : Review
+        + getAverageRatingByBookIsbn(isbn: String) : Double
+        + countByBookIsbn(isbn: String) : Long
+    }
+
+    interface UserRepository {
+        + findByUsername(username: String) : Optional<User>
+        + findByEmail(email: String) : Optional<User>
+    }
+
+    interface OrderRepository {
+        + findByUserUserIdOrderByCreatedAtDesc(uid: Long) : List<Order>
+        + findByStatus(status: String) : List<Order>
+    }
+
+    interface WishlistRepository {
+        + findByUserUserId(userId: Long) : List<Wishlist>
+    }
+
+    interface ReadingHistoryRepository {
+        + findByUserUserId(userId: Long) : List<ReadingHistory>
+    }
+}
+
+BookRepository          --|> JpaRepo
+ReviewRepository        --|> JpaRepo
+UserRepository          --|> JpaRepo
+OrderRepository         --|> JpaRepo
+WishlistRepository      --|> JpaRepo
+ReadingHistoryRepository --|> JpaRepo
+
+BookRepository          ..> Book
+ReviewRepository        ..> Review
+UserRepository          ..> User
+OrderRepository         ..> Order
+WishlistRepository      ..> Wishlist
+ReadingHistoryRepository ..> ReadingHistory
+
+Book        "0..*" -- "1"    Publisher
+Book        "0..*" -- "0..*" Author
+Book        "0..*" -- "0..*" Category
+Review      "0..*" -- "1"    User
+Review      "0..*" -- "1"    Book
+Order       "0..*" -- "1"    User
+Order       "1"    *-- "1..*" OrderItem
+OrderItem   "0..*" -- "1"    Book
+Wishlist    "0..*" -- "1"    User
+Wishlist    "0..*" -- "1"    Book
+ReadingHistory "0..*" -- "1" User
+ReadingHistory "0..*" -- "1" Book
+
+
+@enduml

@@ -1,0 +1,195 @@
+@startuml c4_l4_services
+title C4 L4 — Компонент бизнес-логики: Services
+
+top to bottom direction
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam packageStyle rectangle
+
+package "Domain Entities" #DAE8FC {
+
+    class User {
+        - userId : Long
+        - username : String
+        - email : String
+        - passwordHash : String
+        - createdAt : LocalDateTime
+    }
+
+    class Book {
+        - isbn : String <<PK>>
+        - title : String
+        - price : BigDecimal
+        - avgRating : Double
+        - ratingCount : Integer
+        - publicationDate : LocalDate
+    }
+
+    class Review {
+        - reviewId : Long
+        - rating : Integer
+        - comment : String
+        - createdAt : LocalDateTime
+        - user : User
+        - book : Book
+    }
+
+    class Order {
+        - orderId : Long
+        - totalAmount : BigDecimal
+        - status : String
+        - createdAt : LocalDateTime
+        - user : User
+    }
+
+    class Wishlist {
+        - wishlistId : Long
+        - addedAt : LocalDateTime
+        - user : User
+        - book : Book
+    }
+
+    class ReadingHistory {
+        - historyId : Long
+        - readAt : LocalDateTime
+        - progressPercent : Integer
+        - user : User
+        - book : Book
+    }
+}
+
+package "Service Layer" #E9F7EF {
+
+    class BookService {
+        - bookRepository : BookRepository
+        + findById(bookId: Long) : Optional<Book>
+        + searchBooks(query: String, limit: int) : List<Book>
+        + getTopRated(count: int) : List<Book>
+        + findByCategory(categoryId: Long) : List<Book>
+    }
+
+    class ReviewService {
+        - reviewRepository : ReviewRepository
+        - userRepository : UserRepository
+        - bookRepository : BookRepository
+        + createReview(userId, bookId, rating, comment) : Review
+        + getUserReviews(userId: Long) : List<Review>
+        + getBookReviews(bookId: Long) : List<Review>
+        - updateBookRating(bookId: Long) : void
+    }
+
+    class OrderService {
+        - orderRepository : OrderRepository
+        - userRepository : UserRepository
+        - bookRepository : BookRepository
+        + create(req: CreateOrderRequest) : Order
+        + getByUser(userId: Long) : List<Order>
+        + getByStatus(status: String) : List<Order>
+        + getById(orderId: Long) : Optional<Order>
+    }
+
+    class RecommendationService {
+        - collaborativeService : CollaborativeFilteringService
+        - contentBasedService : ContentBasedFilteringService
+        - bookRepository : BookRepository
+        + getHybridRecommendations(userId, count) : List<BookRecommendation>
+        + getPopularRecommendations(count: int) : List<BookRecommendation>
+        - mergeAndRank(list1, list2, max) : List<BookRecommendation>
+    }
+
+    class CollaborativeFilteringService {
+        - reviewRepository : ReviewRepository
+        - userRepository : UserRepository
+        - bookRepository : BookRepository
+        - readingHistoryRepository : ReadingHistoryRepository
+        + getUserBasedRecommendations(userId, count) : List<BookRecommendation>
+        - findSimilarUsers(userId: Long, reviews: List<Review>, count: int) : List<User>
+        - calculatePearsonCorrelation(r1, r2) : Double
+        - calculateBookScores(userId, reviews, similarUsers) : Map<Long, Double>
+    }
+
+    class ContentBasedFilteringService {
+        - bookRepository : BookRepository
+        - reviewRepository : ReviewRepository
+        + getRecommendationsByUserPreferences(userId, count) : List<BookRecommendation>
+    }
+
+    class WishlistService {
+        - wishlistRepository : WishlistRepository
+        - bookRepository : BookRepository
+        + getWishlist(userId: Long) : List<Wishlist>
+        + addToWishlist(userId: Long, isbn: String) : Wishlist
+        + removeFromWishlist(userId: Long, isbn: String) : void
+    }
+}
+
+package "Repository Interfaces" #FFE6CC {
+
+    interface BookRepository {
+        + findByIsbnWithDetails(isbn: String) : Book
+        + findByCategoryId(categoryId: Long) : List<Book>
+        + findByAuthorId(authorId: Long) : List<Book>
+        + findTopRatedBooks(minRating: Double, p: Pageable) : List<Book>
+        + findMostReviewedBooks(p: Pageable) : List<Book>
+        + searchBooks(query: String, p: Pageable) : List<Book>
+    }
+
+    interface ReviewRepository {
+        + findByUserUserId(userId: Long) : List<Review>
+        + findByBookIsbn(isbn: String) : List<Review>
+        + findByUserIdAndBookIsbn(uid: Long, isbn: String) : Review
+        + getAverageRatingByBookIsbn(isbn: String) : Double
+        + countByBookIsbn(isbn: String) : Long
+    }
+
+    interface UserRepository {
+        + findByUsername(username: String) : Optional<User>
+        + findByEmail(email: String) : Optional<User>
+    }
+
+    interface OrderRepository {
+        + findByUserUserIdOrderByCreatedAtDesc(uid: Long) : List<Order>
+        + findByStatus(status: String) : List<Order>
+    }
+
+    interface WishlistRepository {
+        + findByUserUserId(userId: Long) : List<Wishlist>
+    }
+
+    interface ReadingHistoryRepository {
+        + findByUserUserId(userId: Long) : List<ReadingHistory>
+    }
+}
+
+BookService           ..> BookRepository             : <<depends on>>
+ReviewService         ..> ReviewRepository           : <<depends on>>
+ReviewService         ..> UserRepository             : <<depends on>>
+ReviewService         ..> BookRepository             : <<depends on>>
+OrderService          ..> OrderRepository            : <<depends on>>
+OrderService          ..> UserRepository             : <<depends on>>
+OrderService          ..> BookRepository             : <<depends on>>
+RecommendationService ..> BookRepository             : <<depends on>>
+CollaborativeFilteringService ..> ReviewRepository   : <<depends on>>
+CollaborativeFilteringService ..> UserRepository     : <<depends on>>
+CollaborativeFilteringService ..> BookRepository     : <<depends on>>
+CollaborativeFilteringService ..> ReadingHistoryRepository : <<depends on>>
+ContentBasedFilteringService  ..> BookRepository     : <<depends on>>
+ContentBasedFilteringService  ..> ReviewRepository   : <<depends on>>
+WishlistService       ..> WishlistRepository         : <<depends on>>
+WishlistService       ..> BookRepository             : <<depends on>>
+
+ReviewService         --> BookService               : updateBookRating
+RecommendationService --> CollaborativeFilteringService
+RecommendationService --> ContentBasedFilteringService
+
+BookService           ..> Book          : produces
+ReviewService         ..> Review        : produces
+OrderService          ..> Order         : produces
+WishlistService       ..> Wishlist      : produces
+CollaborativeFilteringService ..> User  : reads
+CollaborativeFilteringService ..> Review : reads
+CollaborativeFilteringService ..> ReadingHistory : reads
+ContentBasedFilteringService  ..> Book  : reads
+ContentBasedFilteringService  ..> Review : reads
+
+@enduml

@@ -1,0 +1,27 @@
+@startuml c4_l2
+!include <C4/C4_Container>
+
+title C4 L2 — Контейнеры: BookStore
+
+
+Person(guest,     "Гость",         "Незарегистрированный посетитель.\nПросматривает каталог и отзывы.")
+Person(customer,  "Покупатель",    "Зарегистрированный пользователь.\nПокупает книги, оставляет отзывы,\nполучает рекомендации.")
+Person(moderator, "Модератор",     "Сотрудник платформы.\nМодерирует отзывы, редактирует каталог.")
+Person(admin,     "Администратор", "Технический администратор.\nУправляет системой и пользователями.")
+
+System_Boundary(bookstore, "BookStore") {
+    Container(spa, "React SPA", "TypeScript / React", "Single-Page Application. Каталог книг, карточки, отзывы, заказы, рекомендации.")
+    Container(api, "REST API", "Java / Spring Boot", "Бизнес-логика: управление книгами, заказами, отзывами. Рекомендательный движок (CF + CB). JWT-аутентификация.")
+    ContainerDb(db, "PostgreSQL", "Реляционная СУБД", "Персистентное хранение: пользователи, книги, заказы, отзывы, история просмотров.")
+    ContainerDb(cache, "Redis", "In-Memory Cache", "Кэш вычисленных рекомендаций и данных книг. TTL 10 мин., инвалидация по событиям отзывов.")
+}
+
+Rel(guest,     spa, "HTTPS")
+Rel(customer,  spa, "HTTPS")
+Rel(moderator, spa, "HTTPS")
+Rel(admin,     spa, "HTTPS")
+Rel(spa, api, "REST-запросы / JSON", "HTTPS / JSON")
+Rel(api, db, "Чтение и запись данных", "JDBC / Hibernate ORM")
+Rel(api, cache, "Кэш рекомендаций и книг", "Redis Protocol")
+
+@enduml

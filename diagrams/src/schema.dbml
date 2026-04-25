@@ -1,0 +1,161 @@
+// BookStore — схема базы данных PostgreSQL 15
+// Нотация DBML (dbdiagram.io)
+
+Project BookStore {
+  database_type: 'PostgreSQL'
+  Note: '''
+    Книжный интернет-магазин с персонализированной рекомендательной системой.
+    Роли PostgreSQL: app_admin, app_manager, app_user.
+  '''
+}
+
+// ─────────────────────────────────────────────────────────
+//  Пользователи
+// ─────────────────────────────────────────────────────────
+Table users {
+  user_id       serial        [pk, increment]
+  username      varchar(100)  [not null, unique, note: 'Уникальное имя пользователя']
+  email         varchar(255)  [not null, unique]
+  password_hash varchar(255)  [not null, note: 'BCrypt-хэш пароля']
+  created_at    timestamp     [not null, default: `now()`]
+
+  Note: 'Зарегистрированные пользователи системы'
+}
+
+// ─────────────────────────────────────────────────────────
+//  Справочники
+// ─────────────────────────────────────────────────────────
+Table publishers {
+  publisher_id  serial        [pk, increment]
+  name          varchar(255)  [not null]
+  country       varchar(100)
+  website       varchar(255)
+
+  Note: 'Издательства'
+}
+
+Table authors {
+  author_id   serial        [pk, increment]
+  name        varchar(255)  [not null]
+  biography   text
+  country     varchar(100)
+
+  Note: 'Авторы книг'
+}
+
+Table categories {
+  category_id  serial        [pk, increment]
+  name         varchar(100)  [not null, unique]
+  description  text
+
+  Note: 'Жанры / категории книг'
+}
+
+// ─────────────────────────────────────────────────────────
+//  Каталог
+// ─────────────────────────────────────────────────────────
+Table books {
+  isbn             varchar(20)     [pk, note: 'ISBN-13']
+  title            varchar(500)    [not null]
+  publisher_id     int             [ref: > publishers.publisher_id]
+  price            decimal(10,2)   [not null, note: 'price > 0']
+  description      text
+  pages            int
+  publication_date date
+  avg_rating       float8          [default: 0, note: 'Пересчитывается триггером при изменении reviews']
+  rating_count     int             [default: 0]
+  created_at       timestamp       [not null, default: `now()`]
+
+  Note: 'Основная сущность каталога'
+}
+
+Table book_authors {
+  book_isbn  varchar(20)  [ref: > books.isbn]
+  author_id  int  [ref: > authors.author_id]
+
+  indexes {
+    (book_isbn, author_id) [pk]
+  }
+
+  Note: 'Связующая таблица Book ↔ Author (M:N)'
+}
+
+Table book_categories {
+  book_isbn    varchar(20)  [ref: > books.isbn]
+  category_id  int  [ref: > categories.category_id]
+
+  indexes {
+    (book_isbn, category_id) [pk]
+  }
+
+  Note: 'Связующая таблица Book ↔ Category (M:N)'
+}
+
+// ─────────────────────────────────────────────────────────
+//  Отзывы
+// ─────────────────────────────────────────────────────────
+Table reviews {
+  review_id   serial  [pk, increment]
+  user_id     int     [not null, ref: > users.user_id]
+  book_isbn   varchar(20)  [not null, ref: > books.isbn]
+  rating      int     [not null, note: 'CHECK: 1..5']
+  comment     text
+  created_at  timestamp [not null, default: `now()`]
+
+  indexes {
+    (user_id, book_isbn) [unique, name: 'uq_user_book_review',
+      note: 'Один пользователь — один отзыв на книгу']
+  }
+
+  Note: 'Оценки и комментарии пользователей. Изменение строки триггерит пересчёт avg_rating в books.'
+}
+
+// ─────────────────────────────────────────────────────────
+//  Заказы
+// ─────────────────────────────────────────────────────────
+Table orders {
+  order_id      serial          [pk, increment]
+  user_id       int             [not null, ref: > users.user_id]
+  total_amount  decimal(10,2)   [not null, default: 0]
+  status        varchar(50)     [not null, default: 'PENDING',
+                                 note: 'PENDING | CONFIRMED | SHIPPED | DELIVERED | CANCELLED']
+  created_at    timestamp       [not null, default: `now()`]
+
+  Note: 'Заказы пользователей'
+}
+
+Table order_items {
+  order_item_id  serial         [pk, increment]
+  order_id       int            [not null, ref: > orders.order_id]
+  book_isbn      varchar(20)    [not null, ref: > books.isbn]
+  quantity       int            [not null, note: 'CHECK: quantity > 0']
+  price          decimal(10,2)  [not null, note: 'Цена книги на момент покупки']
+
+  Note: 'Позиции заказа. price фиксируется при создании — не зависит от текущей цены книги.'
+}
+
+// ─────────────────────────────────────────────────────────
+//  Пользовательские списки
+// ─────────────────────────────────────────────────────────
+Table wishlist {
+  wishlist_id  serial     [pk, increment]
+  user_id      int        [not null, ref: > users.user_id]
+  book_isbn    varchar(20) [not null, ref: > books.isbn]
+  added_at     timestamp  [not null, default: `now()`]
+
+  indexes {
+    (user_id, book_isbn) [unique, name: 'uq_wishlist_user_book']
+  }
+
+  Note: 'Список желаемого пользователя'
+}
+
+Table reading_history {
+  history_id       serial     [pk, increment]
+  user_id          int        [not null, ref: > users.user_id]
+  book_isbn        varchar(20) [not null, ref: > books.isbn]
+  read_at          timestamp  [not null, default: `now()`]
+  progress_percent int        [default: 0, note: 'CHECK: 0..100']
+
+  Note: 'История просмотров страниц книг. Используется как сигнал для рекомендаций.'
+}

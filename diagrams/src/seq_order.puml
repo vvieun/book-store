@@ -1,0 +1,109 @@
+@startuml seq_order
+title Диаграмма последовательностей — Оформление и обработка заказа
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam defaultFontSize 12
+skinparam participant {
+  BackgroundColor #EBF5FB
+  BorderColor     #2980B9
+}
+skinparam actor {
+  BackgroundColor #FDFEFE
+  BorderColor     #1A5276
+}
+skinparam database {
+  BackgroundColor #E9F7EF
+  BorderColor     #1E8449
+}
+
+actor       "Покупатель"   as User
+participant "React SPA"    as SPA
+participant "Controller"   as Ctrl
+participant "Service"      as Svc
+participant "Repository"   as Repo
+database    "PostgreSQL"   as DB
+
+== Просмотр книги ==
+
+User -> SPA  : Открывает карточку книги
+SPA  -> Ctrl : GET /api/books/{isbn}
+Ctrl -> Svc  : getBookByIsbn(isbn)
+Svc  -> Repo : findByIsbn(isbn)
+Repo -> DB   : SELECT books, authors, categories
+DB  --> Repo : Book
+Repo --> Svc : Book
+Svc  --> Ctrl : BookDTO
+Ctrl --> SPA  : 200 OK (JSON)
+SPA  --> User : Отображает карточку книги
+
+== Оформление заказа ==
+
+User -> SPA  : Нажимает «Заказать»
+SPA  -> Ctrl : POST /api/orders (CreateOrderRequest + JWT)
+
+alt JWT невалиден / отсутствует
+    Ctrl --> SPA  : 401 Unauthorized
+    SPA  --> User : Перенаправление на страницу входа
+else JWT валиден
+    Ctrl -> Svc  : createOrder(userId, items)
+
+    Svc  -> Repo : findUserById(userId)
+    Repo -> DB   : SELECT users
+    DB  --> Repo : User
+    Repo --> Svc : User
+
+    loop Для каждой позиции заказа
+        Svc  -> Repo : findBookByIsbn(isbn)
+        Repo -> DB   : SELECT books
+        DB  --> Repo : Book (цена)
+        Repo --> Svc : Book
+
+        alt Книга не найдена
+            Svc --> Ctrl : ResourceNotFoundException
+            Ctrl --> SPA : 400 Bad Request
+        end
+    end
+
+    Svc  -> Svc  : Рассчитать total_amount
+    Svc  -> Repo : save(order)
+    Repo -> DB   : INSERT INTO orders, order_items
+    DB  --> Repo : orderId
+    Repo --> Svc : Order
+
+    Svc  --> Ctrl : OrderDTO
+    Ctrl --> SPA  : 201 Created (JSON)
+    SPA  --> User : «Заказ оформлен» + детали заказа
+end
+
+== Изменение статуса заказа ==
+
+User -> SPA  : Меняет статус заказа (в панели управления)
+SPA  -> Ctrl : PATCH /api/orders/{orderId}/status {status}
+Ctrl -> Svc  : updateStatus(orderId, status)
+Svc  -> Svc  : validateStatus(status) against enum {PENDING,PAID,SHIPPED,DELIVERED,CANCELLED}
+
+alt Статус не из допустимого набора
+    Svc  --> Ctrl : ValidationException("Unsupported status")
+    Ctrl --> SPA  : 400 Bad Request
+else Статус допустим
+    Svc  -> Repo : findById(orderId)
+    Repo -> DB   : SELECT orders
+    DB  --> Repo : Order
+    Repo --> Svc : Order
+    Svc  -> Svc  : validateTransition(oldStatus -> newStatus)
+
+    alt Переход статуса запрещён
+        Svc  --> Ctrl : BusinessRuleException("Invalid transition")
+        Ctrl --> SPA  : 409 Conflict
+    else Переход разрешён
+        Svc  -> Repo : save(order with newStatus)
+        Repo -> DB   : UPDATE orders SET status = ...
+        DB  --> Repo : OK
+        Repo --> Svc : Order
+        Svc  --> Ctrl : OrderDTO
+        Ctrl --> SPA  : 200 OK
+    end
+end
+
+@enduml

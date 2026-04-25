@@ -1,0 +1,49 @@
+@startuml c4_l3
+!include <C4/C4_Component>
+
+title C4 L3 — Компоненты: Backend (Spring Boot REST API)
+
+
+Container_Ext(spa,    "React SPA",    "React",          "Клиентское приложение")
+ContainerDb_Ext(db,   "PostgreSQL",   "СУБД",           "Персистентное хранилище")
+ContainerDb_Ext(cache,"Redis",        "In-Memory Cache","Кэш рекомендаций")
+
+Container_Boundary(api, "Spring Boot REST API") {
+
+    Container_Boundary(layer_ctrl, "Controller Layer  [API Facades]") {
+        Component(api_identity, "Identity API", "Spring MVC @RestController", "Группа контроллеров: AuthController. Регистрация, логин, JWT.")
+        Component(api_catalog,  "Catalog API",  "Spring MVC @RestController", "Группа контроллеров: BookController + ReviewController + RecommendationController. Каталог, отзывы, рекомендации.")
+        Component(api_order,    "Order API",    "Spring MVC @RestController", "Группа контроллеров: OrderController. Оформление и просмотр заказов.")
+    }
+
+    Container_Boundary(layer_svc, "Service Layer  [Business Logic]") {
+        Component(svc_book,   "BookService",                   "Spring @Service", "Получение книг, управление отзывами, пересчёт avg_rating и конвертация Book в BookDTO. Инвалидация кэша рекомендаций при изменении отзывов.")
+        Component(svc_order,  "OrderService",                  "Spring @Service", "Создание заказа, расчёт суммы. Order в OrderDTO.")
+        Component(svc_rec,    "RecommendationService",         "Spring @Service + @Cacheable", "Гибридные рекомендации в одном компоненте: CF + CB, нормализация и ранжирование. Кэширование в Redis (TTL 10 мин).")
+        Component(repo_iface, "Repository Interfaces",         "Java Interfaces", "BookRepository, ReviewRepository, UserRepository, OrderRepository, WishlistRepository, ReadingHistoryRepository. Абстракции, которыми владеет бизнес-логика (DIP).")
+    }
+
+    Container_Boundary(layer_repo, "Repository Layer  [Data Access — паттерн Repository]") {
+        Component(repo, "Repository Implementations", "Spring Data JPA", "Реализации интерфейсов репозиториев. Генерируются Spring Data JPA на основе сигнатур методов.")
+    }
+}
+
+Rel(spa, api_identity, "HTTPS / JSON", "REST")
+Rel(spa, api_catalog,  "HTTPS / JSON", "REST")
+Rel(spa, api_order,    "HTTPS / JSON", "REST")
+
+Rel(api_catalog,  svc_book,   "Использует")
+Rel(api_catalog,  svc_rec,    "Использует")
+Rel(api_order,    svc_order,  "Использует")
+Rel(api_identity, repo_iface, "Читает User")
+
+Rel(svc_book,   repo_iface, "зависит от")
+Rel(svc_order,  repo_iface, "зависит от")
+Rel(svc_rec,    repo_iface, "зависит от")
+
+Rel(repo, repo_iface, "реализует", "Spring Data JPA")
+Rel(repo, db,         "SQL через JPA", "JDBC")
+Rel(svc_rec,    cache, "Кэш рекомендаций", "Redis")
+Rel(svc_book,   cache, "Инвалидирует кэш", "Redis")
+
+@enduml

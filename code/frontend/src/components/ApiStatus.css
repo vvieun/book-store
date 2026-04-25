@@ -1,0 +1,126 @@
+.api-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.api-status-header h2 {
+  color: #2d3748;
+  font-size: 1.8rem;
+}
+
+.status-error,
+.status-success {
+  text-align: center;
+  padding: 3rem 2rem;
+  border-radius: 12px;
+}
+
+.status-error {
+  background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+}
+
+.status-success {
+  background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+}
+
+.status-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.status-error h3 {
+  color: #c53030;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.status-success h3 {
+  color: #2f855a;
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.status-error p {
+  color: #9b2c2c;
+}
+
+.status-details {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 600px;
+  text-align: left;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.status-item:last-child {
+  border-bottom: none;
+}
+
+.status-label {
+  color: #718096;
+  font-weight: 500;
+  font-size: 1.05rem;
+}
+
+.status-value {
+  color: #2d3748;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.status-value.healthy {
+  color: #2f855a;
+}
+
+.api-info {
+  margin-top: 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.api-info h4 {
+  color: #2d3748;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.api-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.api-link {
+  flex: 1;
+  min-width: 150px;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.api-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}

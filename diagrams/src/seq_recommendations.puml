@@ -1,0 +1,67 @@
+@startuml seq_recommendations
+title Диаграмма последовательностей — Формирование персональных рекомендаций
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam defaultFontSize 12
+skinparam participant {
+  BackgroundColor #EBF5FB
+  BorderColor     #2980B9
+}
+skinparam actor {
+  BackgroundColor #FDFEFE
+  BorderColor     #1A5276
+}
+skinparam database {
+  BackgroundColor #E9F7EF
+  BorderColor     #1E8449
+}
+
+actor       "Покупатель"                as User
+participant "React SPA"                as SPA
+participant "Controller"               as Ctrl
+participant "Service"                  as Svc
+participant "CollaborativeFiltering"   as CF
+participant "ContentBasedFiltering"    as CB
+database    "Redis"                    as Redis
+database    "PostgreSQL"               as DB
+
+== Запрос персональных рекомендаций ==
+
+User -> SPA  : Открывает раздел «Рекомендации»
+SPA  -> Ctrl : GET /api/recommendations/{userId}
+Ctrl -> Svc  : getRecommendations(userId)
+Svc  -> Redis : Проверить кэш (ключ: recs:userId)
+
+alt Кэш HIT — TTL не истёк
+    Redis --> Svc : Список рекомендаций из кэша
+else Кэш MISS — нужно пересчитать рекомендации
+    Redis --> Svc : miss
+end
+
+group Пересчёт рекомендаций (только при cache miss)
+    == Коллаборативная фильтрация ==
+    Svc -> CF  : computeCF(userId)
+    CF  -> DB  : Отзывы пользователя
+    DB --> CF  : List<Review>
+    CF  -> DB  : Отзывы всех пользователей
+    DB --> CF  : Матрица оценок
+    CF --> Svc : List<book,isbn,cfScore> (по cfScore DESC)
+
+    == Контентная фильтрация ==
+    Svc -> CB  : computeCB(userId)
+    CB  -> DB  : Книги с жанрами, авторами, avg_rating
+    DB --> CB  : List<Book>
+    CB --> Svc : List<book,isbn,cbScore> (по cbScore DESC)
+end
+
+Svc -> Svc  : Объединить по ISBN
+Svc -> Svc  : Рассчитать finalScore = wCF*cfScore + wCB*cbScore
+Svc -> Svc  : Отсортировать по finalScore DESC, взять Top-N
+Svc -> Redis : Сохранить результат (TTL = 10 мин)
+
+Svc  --> Ctrl : List<RecommendationDTO>
+Ctrl --> SPA  : 200 OK (JSON)
+SPA  --> User : Отображает подборку книг
+
+@enduml

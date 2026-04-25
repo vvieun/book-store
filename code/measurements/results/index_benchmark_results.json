@@ -1,0 +1,317 @@
+{
+  "db_config": {
+    "host": "localhost",
+    "port": 5433,
+    "database": "bookstore_db",
+    "user": "postgres"
+  },
+  "params": {
+    "user_id": 652,
+    "category_id": 13,
+    "orders_user_id": 888
+  },
+  "warmup_runs": 20,
+  "measure_runs": 250,
+  "results": [
+    {
+      "mode": "none",
+      "query_key": "q1_category_top_books",
+      "query_description": "Топ книг по категории",
+      "avg_ms": 2.038484344491735,
+      "median_ms": 1.9909789989469573,
+      "p95_ms": 2.236035458918195,
+      "min_ms": 1.8102079920936376,
+      "max_ms": 6.943499989574775
+    },
+    {
+      "mode": "none",
+      "query_key": "q2_user_reviews_sorted",
+      "query_description": "Отзывы пользователя с сортировкой по рейтингу",
+      "avg_ms": 0.26983665209263563,
+      "median_ms": 0.2625214838190004,
+      "p95_ms": 0.3176829937729053,
+      "min_ms": 0.23025000700727105,
+      "max_ms": 0.515041989274323
+    },
+    {
+      "mode": "none",
+      "query_key": "q3_user_orders_recent",
+      "query_description": "Заказы пользователя по дате",
+      "avg_ms": 1.4190076679224148,
+      "median_ms": 1.374916493659839,
+      "p95_ms": 1.5746649529319257,
+      "min_ms": 1.2463330058380961,
+      "max_ms": 4.105958010768518
+    },
+    {
+      "mode": "none",
+      "query_key": "q4_category_rating_stats",
+      "query_description": "Агрегированная статистика рейтингов категории",
+      "avg_ms": 2.073918476467952,
+      "median_ms": 2.042458509095013,
+      "p95_ms": 2.2690036479616538,
+      "min_ms": 1.9078330078627914,
+      "max_ms": 3.4558750048745424
+    },
+    {
+      "mode": "none",
+      "query_key": "q5_user_order_history_join",
+      "query_description": "История заказов пользователя с join по позициям",
+      "avg_ms": 2.825365987373516,
+      "median_ms": 2.7380210085539147,
+      "p95_ms": 3.1857711815973744,
+      "min_ms": 2.5610830052755773,
+      "max_ms": 9.486458991887048
+    },
+    {
+      "mode": "none",
+      "query_key": "q6_write_insert_order",
+      "query_description": "Запись: вставка заказа и позиции (с rollback)",
+      "avg_ms": 1.6040268446085975,
+      "median_ms": 1.5433124935952947,
+      "p95_ms": 1.9132564106257632,
+      "min_ms": 1.2989160022698343,
+      "max_ms": 2.7754589973483235
+    },
+    {
+      "mode": "simple",
+      "query_key": "q1_category_top_books",
+      "query_description": "Топ книг по категории",
+      "avg_ms": 2.0011320397024974,
+      "median_ms": 1.9892919954145327,
+      "p95_ms": 2.167316127452068,
+      "min_ms": 1.8419999978505075,
+      "max_ms": 2.599208994070068
+    },
+    {
+      "mode": "simple",
+      "query_key": "q2_user_reviews_sorted",
+      "query_description": "Отзывы пользователя с сортировкой по рейтингу",
+      "avg_ms": 0.2778939720010385,
+      "median_ms": 0.26412500301375985,
+      "p95_ms": 0.3230893882573582,
+      "min_ms": 0.23141599376685917,
+      "max_ms": 1.1600830184761435
+    },
+    {
+      "mode": "simple",
+      "query_key": "q3_user_orders_recent",
+      "query_description": "Заказы пользователя по дате",
+      "avg_ms": 0.3333406405290589,
+      "median_ms": 0.3226249973522499,
+      "p95_ms": 0.3946207943954505,
+      "min_ms": 0.2959580160677433,
+      "max_ms": 0.49762497656047344
+    },
+    {
+      "mode": "simple",
+      "query_key": "q4_category_rating_stats",
+      "query_description": "Агрегированная статистика рейтингов категории",
+      "avg_ms": 2.036755171371624,
+      "median_ms": 2.0245210034772754,
+      "p95_ms": 2.156593905237969,
+      "min_ms": 1.9019590108655393,
+      "max_ms": 2.268625015858561
+    },
+    {
+      "mode": "simple",
+      "query_key": "q5_user_order_history_join",
+      "query_description": "История заказов пользователя с join по позициям",
+      "avg_ms": 0.4433016673428938,
+      "median_ms": 0.42574998224154115,
+      "p95_ms": 0.5480479565449059,
+      "min_ms": 0.3802080173045397,
+      "max_ms": 0.9583329956512898
+    },
+    {
+      "mode": "simple",
+      "query_key": "q6_write_insert_order",
+      "query_description": "Запись: вставка заказа и позиции (с rollback)",
+      "avg_ms": 1.4975861669518054,
+      "median_ms": 1.4418750070035458,
+      "p95_ms": 1.8269831474754028,
+      "min_ms": 1.313249988015741,
+      "max_ms": 2.7951249794568866
+    },
+    {
+      "mode": "composite_only",
+      "query_key": "q1_category_top_books",
+      "query_description": "Топ книг по категории",
+      "avg_ms": 2.0407498474232852,
+      "median_ms": 2.006083494052291,
+      "p95_ms": 2.2718536405591294,
+      "min_ms": 1.8337910005357116,
+      "max_ms": 2.8375420079100877
+    },
+    {
+      "mode": "composite_only",
+      "query_key": "q2_user_reviews_sorted",
+      "query_description": "Отзывы пользователя с сортировкой по рейтингу",
+      "avg_ms": 0.27618313184939325,
+      "median_ms": 0.2612289972603321,
+      "p95_ms": 0.32512120087631047,
+      "min_ms": 0.2355000178795308,
+      "max_ms": 1.2710000155493617
+    },
+    {
+      "mode": "composite_only",
+      "query_key": "q3_user_orders_recent",
+      "query_description": "Заказы пользователя по дате",
+      "avg_ms": 0.34434712829533964,
+      "median_ms": 0.31856249552220106,
+      "p95_ms": 0.39869535103207454,
+      "min_ms": 0.2622079919092357,
+      "max_ms": 2.367917011724785
+    },
+    {
+      "mode": "composite_only",
+      "query_key": "q4_category_rating_stats",
+      "query_description": "Агрегированная статистика рейтингов категории",
+      "avg_ms": 2.0640213560545817,
+      "median_ms": 2.0495209901127964,
+      "p95_ms": 2.2218725498532876,
+      "min_ms": 1.8751669849734753,
+      "max_ms": 2.7817079972010106
+    },
+    {
+      "mode": "composite_only",
+      "query_key": "q5_user_order_history_join",
+      "query_description": "История заказов пользователя с join по позициям",
+      "avg_ms": 1.7161484990501776,
+      "median_ms": 1.7024169937940314,
+      "p95_ms": 1.8550249966210686,
+      "min_ms": 1.5837920072954148,
+      "max_ms": 2.0332499989308417
+    },
+    {
+      "mode": "composite_only",
+      "query_key": "q6_write_insert_order",
+      "query_description": "Запись: вставка заказа и позиции (с rollback)",
+      "avg_ms": 1.6044771441956982,
+      "median_ms": 1.5439790004165843,
+      "p95_ms": 1.848643751873169,
+      "min_ms": 1.2228750274516642,
+      "max_ms": 5.635584006085992
+    },
+    {
+      "mode": "simple_composite",
+      "query_key": "q1_category_top_books",
+      "query_description": "Топ книг по категории",
+      "avg_ms": 1.987769836676307,
+      "median_ms": 1.9692500063683838,
+      "p95_ms": 2.1735226953751408,
+      "min_ms": 1.834833004977554,
+      "max_ms": 2.4446669849567115
+    },
+    {
+      "mode": "simple_composite",
+      "query_key": "q2_user_reviews_sorted",
+      "query_description": "Отзывы пользователя с сортировкой по рейтингу",
+      "avg_ms": 0.27989264379721135,
+      "median_ms": 0.2642090112203732,
+      "p95_ms": 0.3279064083471894,
+      "min_ms": 0.23891599266789854,
+      "max_ms": 1.370374986436218
+    },
+    {
+      "mode": "simple_composite",
+      "query_key": "q3_user_orders_recent",
+      "query_description": "Заказы пользователя по дате",
+      "avg_ms": 0.3415243319468573,
+      "median_ms": 0.3220209910068661,
+      "p95_ms": 0.4066622015670873,
+      "min_ms": 0.29029097640886903,
+      "max_ms": 1.0064170055557042
+    },
+    {
+      "mode": "simple_composite",
+      "query_key": "q4_category_rating_stats",
+      "query_description": "Агрегированная статистика рейтингов категории",
+      "avg_ms": 2.0399383066687733,
+      "median_ms": 2.0313540007919073,
+      "p95_ms": 2.1478396345628425,
+      "min_ms": 1.9140419899486005,
+      "max_ms": 2.304374997038394
+    },
+    {
+      "mode": "simple_composite",
+      "query_key": "q5_user_order_history_join",
+      "query_description": "История заказов пользователя с join по позициям",
+      "avg_ms": 0.45169719110708684,
+      "median_ms": 0.4398125020088628,
+      "p95_ms": 0.5380293412599713,
+      "min_ms": 0.38158398820087314,
+      "max_ms": 0.9129160025622696
+    },
+    {
+      "mode": "simple_composite",
+      "query_key": "q6_write_insert_order",
+      "query_description": "Запись: вставка заказа и позиции (с rollback)",
+      "avg_ms": 1.4863131609745324,
+      "median_ms": 1.4423749962588772,
+      "p95_ms": 1.8517393982619978,
+      "min_ms": 1.0824170021805912,
+      "max_ms": 2.7325830014888197
+    },
+    {
+      "mode": "overindexed",
+      "query_key": "q1_category_top_books",
+      "query_description": "Топ книг по категории",
+      "avg_ms": 2.033780984231271,
+      "median_ms": 1.9855000136885792,
+      "p95_ms": 2.369858152815141,
+      "min_ms": 1.818791002733633,
+      "max_ms": 4.084332991624251
+    },
+    {
+      "mode": "overindexed",
+      "query_key": "q2_user_reviews_sorted",
+      "query_description": "Отзывы пользователя с сортировкой по рейтингу",
+      "avg_ms": 0.3203734604176134,
+      "median_ms": 0.279792002402246,
+      "p95_ms": 0.5400978421675973,
+      "min_ms": 0.22595800692215562,
+      "max_ms": 1.5378749812953174
+    },
+    {
+      "mode": "overindexed",
+      "query_key": "q3_user_orders_recent",
+      "query_description": "Заказы пользователя по дате",
+      "avg_ms": 0.3478651710320264,
+      "median_ms": 0.3182079963153228,
+      "p95_ms": 0.44736683630617335,
+      "min_ms": 0.2827499993145466,
+      "max_ms": 1.2819159892387688
+    },
+    {
+      "mode": "overindexed",
+      "query_key": "q4_category_rating_stats",
+      "query_description": "Агрегированная статистика рейтингов категории",
+      "avg_ms": 2.0766036516288295,
+      "median_ms": 2.0539584947982803,
+      "p95_ms": 2.2628600578173064,
+      "min_ms": 1.9322909938637167,
+      "max_ms": 2.876625017961487
+    },
+    {
+      "mode": "overindexed",
+      "query_key": "q5_user_order_history_join",
+      "query_description": "История заказов пользователя с join по позициям",
+      "avg_ms": 0.44704384403303266,
+      "median_ms": 0.43418799759820104,
+      "p95_ms": 0.5262919905362651,
+      "min_ms": 0.3932919935323298,
+      "max_ms": 1.2367910239845514
+    },
+    {
+      "mode": "overindexed",
+      "query_key": "q6_write_insert_order",
+      "query_description": "Запись: вставка заказа и позиции (с rollback)",
+      "avg_ms": 1.4917793237837031,
+      "median_ms": 1.4323955110739917,
+      "p95_ms": 1.7836161510786042,
+      "min_ms": 1.3258330000098795,
+      "max_ms": 2.838125015841797
+    }
+  ]
+}

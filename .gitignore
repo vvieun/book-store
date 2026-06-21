@@ -14,11 +14,13 @@ __pycache__/
 .idea/
 .vscode/
 
-# build artifacts
 **/target/
 **/node_modules/
 **/build/
 **/dist/
+code/backend/src/main/resources/static/
 
-# runtime
 **/logs/
+*.pid
+
+code/benchmarks/

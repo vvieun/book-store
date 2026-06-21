@@ -1,13 +1,11 @@
-FROM node:18-alpine
-
+FROM node:20-alpine AS build
 WORKDIR /app
-
 COPY package*.json ./
-
-RUN npm install --legacy-peer-deps
-
+RUN npm ci
 COPY . .
+RUN npm run build -- --outDir dist --emptyOutDir
 
-EXPOSE 3000
-
-CMD ["npm", "start"]
+FROM nginx:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80

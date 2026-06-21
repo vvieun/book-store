@@ -19,24 +19,32 @@ skinparam database {
 
 actor       "Покупатель"                as User
 participant "React SPA"                as SPA
-participant "Controller"               as Ctrl
-participant "Service"                  as Svc
+participant "RecommendationController" as Ctrl
+participant "AuthSessionService"       as Auth
+participant "RecommendationService"    as Svc
 participant "CollaborativeFiltering"   as CF
 participant "ContentBasedFiltering"    as CB
+participant "RecommendationCacheRepository" as CacheRepo
+participant "BookRepository"           as BookRepo
 database    "Redis"                    as Redis
 database    "PostgreSQL"               as DB
 
 == Запрос персональных рекомендаций ==
 
 User -> SPA  : Открывает раздел «Рекомендации»
-SPA  -> Ctrl : GET /api/recommendations/{userId}
-Ctrl -> Svc  : getRecommendations(userId)
-Svc  -> Redis : Проверить кэш (ключ: recs:userId)
+SPA  -> Ctrl : GET /api/recommendations?count=5 (X-Auth-Token)
+Ctrl -> Auth : requireUser(token)
+Auth --> Ctrl : User
+Ctrl -> Svc  : getHybridRecommendations(userId, count)
+Svc  -> CacheRepo : getHybridRecommendations(userId, count)
+CacheRepo -> Redis : Проверить кэш (ключ recs:userId:count)
 
 alt Кэш HIT — TTL не истёк
-    Redis --> Svc : Список рекомендаций из кэша
+    Redis --> CacheRepo : recommendations
+    CacheRepo --> Svc : recommendations
 else Кэш MISS — нужно пересчитать рекомендации
-    Redis --> Svc : miss
+    Redis --> CacheRepo : miss
+    CacheRepo --> Svc : null
 end
 
 group Пересчёт рекомендаций (только при cache miss)
@@ -50,17 +58,18 @@ group Пересчёт рекомендаций (только при cache miss)
 
     == Контентная фильтрация ==
     Svc -> CB  : computeCB(userId)
-    CB  -> DB  : Книги с жанрами, авторами, avg_rating
+    CB  -> DB  : Книги и отзывы пользователя
     DB --> CB  : List<Book>
     CB --> Svc : List<book,isbn,cbScore> (по cbScore DESC)
 end
 
-Svc -> Svc  : Объединить по ISBN
+Svc -> Svc  : Объединить по isbn
 Svc -> Svc  : Рассчитать finalScore = wCF*cfScore + wCB*cbScore
 Svc -> Svc  : Отсортировать по finalScore DESC, взять Top-N
-Svc -> Redis : Сохранить результат (TTL = 10 мин)
+Svc -> CacheRepo : putHybridRecommendations(userId, count, recommendations)
+CacheRepo -> Redis : Сохранить результат в кэше
 
-Svc  --> Ctrl : List<RecommendationDTO>
+Svc  --> Ctrl : List<Recommendation>
 Ctrl --> SPA  : 200 OK (JSON)
 SPA  --> User : Отображает подборку книг
 

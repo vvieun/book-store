@@ -1,5 +1,3 @@
--- Вспомогательные функции для генерации случайных данных
-
 CREATE OR REPLACE FUNCTION random_date(start_date DATE, end_date DATE)
 RETURNS DATE AS $$
 BEGIN
@@ -17,8 +15,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
--- Проверка количества строк во всех таблицах после загрузки данных
 
 SELECT 'users'            AS table_name, COUNT(*) AS row_count FROM users
 UNION ALL
@@ -42,7 +38,9 @@ SELECT 'order_items',      COUNT(*) FROM order_items
 UNION ALL
 SELECT 'wishlist',         COUNT(*) FROM wishlist
 UNION ALL
-SELECT 'reading_history',  COUNT(*) FROM reading_history
+SELECT 'collections',      COUNT(*) FROM collections
+UNION ALL
+SELECT 'collection_books', COUNT(*) FROM collection_books
 UNION ALL
 SELECT 'recommendations',  COUNT(*) FROM recommendations
 ORDER BY table_name;

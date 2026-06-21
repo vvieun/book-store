@@ -1,0 +1,257 @@
+[
+  {
+    "mode": "simple",
+    "query_key": "q1_category_top_books",
+    "query_description": "Топ книг по категории",
+    "execution_time_ms": 0.055,
+    "planning_time_ms": 0.06,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 2
+  },
+  {
+    "mode": "simple",
+    "query_key": "q2_user_reviews_sorted",
+    "query_description": "Отзывы пользователя с сортировкой по рейтингу",
+    "execution_time_ms": 0.145,
+    "planning_time_ms": 0.009,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "simple",
+    "query_key": "q3_user_orders_recent",
+    "query_description": "Заказы пользователя по дате",
+    "execution_time_ms": 0.012,
+    "planning_time_ms": 0.012,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "simple",
+    "query_key": "q4_category_rating_stats",
+    "query_description": "Агрегированная статистика рейтингов категории",
+    "execution_time_ms": 3.119,
+    "planning_time_ms": 0.159,
+    "seq_scan_nodes": 1,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "simple",
+    "query_key": "q5_user_order_history_join",
+    "query_description": "История заказов пользователя с join по позициям",
+    "execution_time_ms": 0.023,
+    "planning_time_ms": 0.08,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 2
+  },
+  {
+    "mode": "simple",
+    "query_key": "q6_write_insert_order",
+    "query_description": "Запись: вставка заказов и позиций (с rollback)",
+    "plan_summary": "write_query_no_explain"
+  },
+  {
+    "mode": "composite_only",
+    "query_key": "q1_category_top_books",
+    "query_description": "Топ книг по категории",
+    "execution_time_ms": 0.266,
+    "planning_time_ms": 0.058,
+    "seq_scan_nodes": 1,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "composite_only",
+    "query_key": "q2_user_reviews_sorted",
+    "query_description": "Отзывы пользователя с сортировкой по рейтингу",
+    "execution_time_ms": 0.146,
+    "planning_time_ms": 0.014,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "composite_only",
+    "query_key": "q3_user_orders_recent",
+    "query_description": "Заказы пользователя по дате",
+    "execution_time_ms": 0.011,
+    "planning_time_ms": 0.011,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "composite_only",
+    "query_key": "q4_category_rating_stats",
+    "query_description": "Агрегированная статистика рейтингов категории",
+    "execution_time_ms": 3.318,
+    "planning_time_ms": 0.157,
+    "seq_scan_nodes": 1,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "composite_only",
+    "query_key": "q5_user_order_history_join",
+    "query_description": "История заказов пользователя с join по позициям",
+    "execution_time_ms": 0.122,
+    "planning_time_ms": 0.04,
+    "seq_scan_nodes": 1,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "composite_only",
+    "query_key": "q6_write_insert_order",
+    "query_description": "Запись: вставка заказов и позиций (с rollback)",
+    "plan_summary": "write_query_no_explain"
+  },
+  {
+    "mode": "none",
+    "query_key": "q1_category_top_books",
+    "query_description": "Топ книг по категории",
+    "execution_time_ms": 0.289,
+    "planning_time_ms": 0.064,
+    "seq_scan_nodes": 1,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "none",
+    "query_key": "q2_user_reviews_sorted",
+    "query_description": "Отзывы пользователя с сортировкой по рейтингу",
+    "execution_time_ms": 0.147,
+    "planning_time_ms": 0.008,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "none",
+    "query_key": "q3_user_orders_recent",
+    "query_description": "Заказы пользователя по дате",
+    "execution_time_ms": 0.065,
+    "planning_time_ms": 0.007,
+    "seq_scan_nodes": 1,
+    "index_scan_nodes": 0
+  },
+  {
+    "mode": "none",
+    "query_key": "q4_category_rating_stats",
+    "query_description": "Агрегированная статистика рейтингов категории",
+    "execution_time_ms": 3.102,
+    "planning_time_ms": 0.164,
+    "seq_scan_nodes": 1,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "none",
+    "query_key": "q5_user_order_history_join",
+    "query_description": "История заказов пользователя с join по позициям",
+    "execution_time_ms": 0.185,
+    "planning_time_ms": 0.041,
+    "seq_scan_nodes": 2,
+    "index_scan_nodes": 0
+  },
+  {
+    "mode": "none",
+    "query_key": "q6_write_insert_order",
+    "query_description": "Запись: вставка заказов и позиций (с rollback)",
+    "plan_summary": "write_query_no_explain"
+  },
+  {
+    "mode": "overindexed",
+    "query_key": "q1_category_top_books",
+    "query_description": "Топ книг по категории",
+    "execution_time_ms": 0.047,
+    "planning_time_ms": 0.066,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 2
+  },
+  {
+    "mode": "overindexed",
+    "query_key": "q2_user_reviews_sorted",
+    "query_description": "Отзывы пользователя с сортировкой по рейтингу",
+    "execution_time_ms": 0.187,
+    "planning_time_ms": 0.018,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "overindexed",
+    "query_key": "q3_user_orders_recent",
+    "query_description": "Заказы пользователя по дате",
+    "execution_time_ms": 0.013,
+    "planning_time_ms": 0.014,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "overindexed",
+    "query_key": "q4_category_rating_stats",
+    "query_description": "Агрегированная статистика рейтингов категории",
+    "execution_time_ms": 3.249,
+    "planning_time_ms": 0.203,
+    "seq_scan_nodes": 1,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "overindexed",
+    "query_key": "q5_user_order_history_join",
+    "query_description": "История заказов пользователя с join по позициям",
+    "execution_time_ms": 0.036,
+    "planning_time_ms": 0.07,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 2
+  },
+  {
+    "mode": "overindexed",
+    "query_key": "q6_write_insert_order",
+    "query_description": "Запись: вставка заказов и позиций (с rollback)",
+    "plan_summary": "write_query_no_explain"
+  },
+  {
+    "mode": "simple_composite",
+    "query_key": "q1_category_top_books",
+    "query_description": "Топ книг по категории",
+    "execution_time_ms": 0.045,
+    "planning_time_ms": 0.065,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 2
+  },
+  {
+    "mode": "simple_composite",
+    "query_key": "q2_user_reviews_sorted",
+    "query_description": "Отзывы пользователя с сортировкой по рейтингу",
+    "execution_time_ms": 0.145,
+    "planning_time_ms": 0.016,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "simple_composite",
+    "query_key": "q3_user_orders_recent",
+    "query_description": "Заказы пользователя по дате",
+    "execution_time_ms": 0.012,
+    "planning_time_ms": 0.013,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "simple_composite",
+    "query_key": "q4_category_rating_stats",
+    "query_description": "Агрегированная статистика рейтингов категории",
+    "execution_time_ms": 3.294,
+    "planning_time_ms": 0.155,
+    "seq_scan_nodes": 1,
+    "index_scan_nodes": 1
+  },
+  {
+    "mode": "simple_composite",
+    "query_key": "q5_user_order_history_join",
+    "query_description": "История заказов пользователя с join по позициям",
+    "execution_time_ms": 0.024,
+    "planning_time_ms": 0.056,
+    "seq_scan_nodes": 0,
+    "index_scan_nodes": 2
+  },
+  {
+    "mode": "simple_composite",
+    "query_key": "q6_write_insert_order",
+    "query_description": "Запись: вставка заказов и позиций (с rollback)",
+    "plan_summary": "write_query_no_explain"
+  }
+]

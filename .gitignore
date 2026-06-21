@@ -14,10 +14,11 @@ __pycache__/
 .idea/
 .vscode/
 
-code/api-java/target/
-code/api-java/.mvn/wrapper/maven-wrapper.jar
+# build artifacts
+**/target/
+**/node_modules/
+**/build/
+**/dist/
 
-code/frontend/node_modules/
-code/frontend/build/
-
-code/measurements/results/*.pdf
+# runtime
+**/logs/

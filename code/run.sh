@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ---------------------------------------------------------------------------
+# run.sh — управление сервисами Bookstore (Docker Compose)
+# Использование: ./run.sh <команда> [аргументы]
+# ---------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 DC="docker compose -f $COMPOSE_FILE"
+SCRIPTS_DIR="$SCRIPT_DIR/scripts"
 
+# Цвета
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -45,6 +51,7 @@ wait_healthy() {
     success "$service готов."
 }
 
+# ---------------------------------------------------------------------------
 cmd_start() {
     require_docker
     info "Запуск сервисов (сборка образов при необходимости)..."
@@ -69,6 +76,7 @@ cmd_start() {
     echo ""
 }
 
+# ---------------------------------------------------------------------------
 cmd_stop() {
     require_docker
     info "Остановка сервисов..."
@@ -76,6 +84,7 @@ cmd_stop() {
     success "Все сервисы остановлены."
 }
 
+# ---------------------------------------------------------------------------
 cmd_restart() {
     local service="${1:-}"
     require_docker
@@ -91,6 +100,7 @@ cmd_restart() {
     fi
 }
 
+# ---------------------------------------------------------------------------
 cmd_logs() {
     require_docker
     local service="${1:-}"
@@ -101,6 +111,7 @@ cmd_logs() {
     fi
 }
 
+# ---------------------------------------------------------------------------
 cmd_status() {
     require_docker
     echo ""
@@ -108,9 +119,11 @@ cmd_status() {
     echo ""
 }
 
+# ---------------------------------------------------------------------------
 cmd_seed() {
     require_docker
 
+    # Проверяем, что postgres запущен
     if ! $DC ps postgres 2>/dev/null | grep -q "running\|healthy"; then
         error "PostgreSQL не запущен. Выполните сначала: ./run.sh start"
         exit 1
@@ -123,10 +136,11 @@ cmd_seed() {
         pip3 install psycopg2-binary bcrypt -q
     fi
 
-    python3 "$SCRIPT_DIR/generate_data.py"
+    python3 "$SCRIPTS_DIR/generate_data.py"
     success "Тестовые данные загружены."
 }
 
+# ---------------------------------------------------------------------------
 cmd_sql() {
     require_docker
 
@@ -149,12 +163,14 @@ cmd_sql() {
     success "Все SQL-скрипты применены."
 }
 
+# ---------------------------------------------------------------------------
 cmd_psql() {
     require_docker
     info "Подключение к PostgreSQL (bookstore_db)..."
     $DC exec postgres psql -U postgres -d bookstore_db
 }
 
+# ---------------------------------------------------------------------------
 cmd_clean() {
     require_docker
     warn "Это удалит все контейнеры И тома (данные БД будут потеряны)!"
@@ -167,6 +183,7 @@ cmd_clean() {
     fi
 }
 
+# ---------------------------------------------------------------------------
 usage() {
     echo ""
     echo -e "${BOLD}Использование:${RESET} ./run.sh <команда> [аргументы]"
@@ -190,6 +207,7 @@ usage() {
     echo ""
 }
 
+# ---------------------------------------------------------------------------
 case "${1:-}" in
     start)    cmd_start ;;
     stop)     cmd_stop ;;
@@ -208,3 +226,4 @@ case "${1:-}" in
         exit 1
         ;;
 esac
+

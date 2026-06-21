@@ -16,7 +16,8 @@ Table users {
   user_id       serial        [pk, increment]
   username      varchar(100)  [not null, unique, note: 'Уникальное имя пользователя']
   email         varchar(255)  [not null, unique]
-  password_hash varchar(255)  [not null, note: 'BCrypt-хэш пароля']
+  password_hash varchar(255)  [not null, note: 'SHA-256-хэш пароля']
+  role          varchar(20)   [not null, default: 'CUSTOMER', note: 'CUSTOMER | MODERATOR | ADMIN']
   created_at    timestamp     [not null, default: `now()`]
 
   Note: 'Зарегистрированные пользователи системы'
@@ -150,12 +151,45 @@ Table wishlist {
   Note: 'Список желаемого пользователя'
 }
 
-Table reading_history {
-  history_id       serial     [pk, increment]
-  user_id          int        [not null, ref: > users.user_id]
-  book_isbn        varchar(20) [not null, ref: > books.isbn]
-  read_at          timestamp  [not null, default: `now()`]
-  progress_percent int        [default: 0, note: 'CHECK: 0..100']
+// ─────────────────────────────────────────────────────────
+//  Подборки книг
+// ─────────────────────────────────────────────────────────
+Table collections {
+  collection_id   serial        [pk, increment]
+  owner_user_id   int           [not null, ref: > users.user_id]
+  name            varchar(255)  [not null]
+  description     text
+  created_at      timestamp     [not null, default: `now()`]
 
-  Note: 'История просмотров страниц книг. Используется как сигнал для рекомендаций.'
+  Note: 'Пользовательские подборки книг'
+}
+
+Table collection_books {
+  collection_book_id  serial       [pk, increment]
+  collection_id       int          [not null, ref: > collections.collection_id]
+  book_isbn           varchar(20)  [not null, ref: > books.isbn]
+  added_at            timestamp    [not null, default: `now()`]
+
+  indexes {
+    (collection_id, book_isbn) [unique, name: 'uq_collection_book']
+  }
+
+  Note: 'Связь подборка ↔ книга (M:N с атрибутом added_at)'
+}
+
+// ─────────────────────────────────────────────────────────
+//  Рекомендации
+// ─────────────────────────────────────────────────────────
+Table recommendations {
+  recommendation_id  serial          [pk, increment]
+  user_id            int             [not null, ref: > users.user_id]
+  book_isbn          varchar(20)     [not null, ref: > books.isbn]
+  score              decimal(8,6)    [not null, note: 'Оценка релевантности от функции calculate_recommendations']
+  created_at         timestamp       [not null, default: `now()`]
+
+  indexes {
+    (user_id, book_isbn) [unique, name: 'uq_recommendation_user_book']
+  }
+
+  Note: 'Предвычисленные рекомендации (заполняется функцией calculate_recommendations)'
 }

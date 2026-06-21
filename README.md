@@ -2,7 +2,7 @@
 
 # bookstore with a recommendation system
 
-a school project: a bookstore with a spring boot backend, a react frontend, a postgresql database and a redis cache.
+a bookstore with a spring boot backend, a react frontend, a postgresql database and a redis cache.
 
 ## contents
 

@@ -1,214 +1,216 @@
-# книжный магазин с системой рекомендаций
+[English](README.md) · [Русский](README.ru.md)
 
-учебный проект книжного магазина с backend на spring boot, frontend на react, базой данных postgresql и кэшем redis.
+# bookstore with a recommendation system
 
-## содержание
+a school project: a bookstore with a spring boot backend, a react frontend, a postgresql database and a redis cache.
 
-- [о проекте](#о-проекте)
-- [описание предметной области и основных сущностей](#описание-предметной-области-и-основных-сущностей)
-- [описание акторов](#описание-акторов-ролей)
-- [use-case диаграмма](#use-case-диаграмма)
-- [er-диаграмма](#er-диаграмма)
-- [пользовательские сценарии](#пользовательские-сценарии)
-- [бизнес-процессы (bpmn)](#бизнес-процессы-bpmn)
+## contents
+
+- [about the project](#about-the-project)
+- [domain description and core entities](#domain-description-and-core-entities)
+- [actors](#actors-roles)
+- [use-case diagram](#use-case-diagram)
+- [er diagram](#er-diagram)
+- [user scenarios](#user-scenarios)
+- [business processes (bpmn)](#business-processes-bpmn)
 - [c4](#c4)
-- [диаграммы последовательностей](#диаграммы-последовательностей)
-- [схема базы данных](#схема-базы-данных)
-- [схемы алгоритмов функций](#схемы-алгоритмов-функций)
-- [структура проекта](#структура-проекта)
-- [стек](#стек)
-- [запуск](#запуск)
-- [исследование](#исследование)
+- [sequence diagrams](#sequence-diagrams)
+- [database schema](#database-schema)
+- [function algorithm flowcharts](#function-algorithm-flowcharts)
+- [project structure](#project-structure)
+- [stack](#stack)
+- [running](#running)
+- [research](#research)
 
-## о проекте
+## about the project
 
-учебная база данных книжного магазина с персонализированными рекомендациями на основе поведения пользователей. предметная область охватывает две связанные сферы:
+a bookstore database with personal book recommendations based on what each user does. the project has two parts:
 
-- **книжный магазин** — каталог книг, авторы, издательства, заказы, списки желаемого и пользовательские подборки;
-- **рекомендательная система** — отзывы и оценки пользователей и предвычисленные результаты алгоритмов фильтрации.
+- **bookstore** — the list of books, authors, publishers, orders, wishlists and book collections made by users;
+- **recommendation system** — user reviews and ratings, and the saved results of the filtering algorithms.
 
-база данных спроектирована в третьей нормальной форме, поддерживает ролевую модель доступа и обеспечивает выполнение типовых запросов за время не более 100 мс за счёт индексирования и внешнего кэширования (redis).
+the database is in third normal form. it uses a role-based access model. thanks to indexing and an outside cache (redis), normal queries run in 100 ms or less.
 
-### рекомендательная система
+### recommendation system
 
-используются два подхода.
+the project uses two methods.
 
-**коллаборативная фильтрация** — поиск похожих пользователей по матрице оценок. сходство пользователей $u_i$ и $u_j$ вычисляется через коэффициент корреляции пирсона:
+**collaborative filtering** — it finds users who are alike, using the ratings matrix. to measure how alike users $u_i$ and $u_j$ are, it uses the pearson correlation coefficient:
 
 $$\text{sim}(u_i, u_j) = \frac{\sum_{p \in P} (r_{i,p} - \bar{r}_i)(r_{j,p} - \bar{r}_j)}{\sqrt{\sum_{p \in P} (r_{i,p} - \bar{r}_i)^2} \cdot \sqrt{\sum_{p \in P} (r_{j,p} - \bar{r}_j)^2}}$$
 
-где $r_{i,p}$ — оценка пользователя $i$ книге $p$, $\bar{r}_i$ — средняя оценка пользователя $i$, $P$ — множество оценённых книг. в реализации (функция бд `calculate_recommendations`) отбираются до 10 наиболее похожих пользователей (корреляция $> 0.3$ и не менее 3 общих оценок), а балл книги — взвешенное среднее их оценок:
+here $r_{i,p}$ is the rating that user $i$ gave to book $p$, $\bar{r}_i$ is user $i$'s average rating, and $P$ is the set of rated books. in the code (the db function `calculate_recommendations`), it picks up to 10 most alike users (correlation $> 0.3$ and at least 3 shared ratings). a book's score is the weighted average of their ratings:
 
 $$s_{\text{collab}}(u, p) = \frac{\sum_{v \in N} \text{sim}(u, v) \cdot r_{v,p}}{\sum_{v \in N} \lvert \text{sim}(u, v) \rvert}$$
 
-где $N$ — похожие пользователи, оценившие книгу $p$.
+here $N$ is the set of alike users who rated book $p$.
 
-**контентная фильтрация** — сопоставление атрибутов книги с профилем предпочтений пользователя. релевантность книги $p$ для пользователя $u$:
+**content-based filtering** — it matches a book's features against what the user likes. how well book $p$ fits user $u$:
 
 $$\text{rel}(u, p) = \vec{u} \cdot \vec{p} = \sum_{i=1}^{n} u_i \cdot p_i$$
 
-где $\vec{p} = (f_1, \ldots, f_n)$ — вектор признаков книги, $\vec{u}$ — вектор предпочтений пользователя. профиль строится по оценённым пользователем книгам (веса категорий и авторов), и каждая книга-кандидат получает балл $s_{\text{content}}$ как сумму совпавших весов с поправкой на средний рейтинг книги.
+here $\vec{p} = (f_1, \ldots, f_n)$ is the book's feature vector and $\vec{u}$ is the user's preference vector. the profile is built from the books the user has rated (category and author weights). each candidate book gets a score $s_{\text{content}}$: the sum of matched weights, changed by the book's average rating.
 
-### объединение подходов в одну оценку
+### combining the approaches into a single score
 
-итоговая рекомендация — гибрид. для книги, найденной обоими методами, баллы складываются с весами:
+the final recommendation mixes both methods. for a book found by both, the scores are added with weights:
 
 $$\text{score}(u, p) = w \cdot s_{\text{collab}}(u, p) + (1 - w) \cdot s_{\text{content}}(u, p)$$
 
-где $w$ — вес коллаборативной составляющей (`bookstore.recommendation.collaborative-weight`, по умолчанию $0.5$). книги, найденные только одним методом, сохраняют свой балл. список сортируется по убыванию оценки, обрезается до запрошенного размера и кэшируется в redis; если персональных рекомендаций не хватает, он дополняется популярными книгами (топ по среднему рейтингу).
+here $w$ is the weight of the collaborative part (`bookstore.recommendation.collaborative-weight`, $0.5$ by default). a book found by only one method keeps its score. the list is sorted from high score to low, cut to the asked size and saved in redis. if there are not enough personal picks, the system adds popular books (the top books by average rating).
 
-## описание предметной области и основных сущностей
+## domain description and core entities
 
-предметная область — онлайн-магазин книг с персональными рекомендациями.
+the domain is an online bookstore with personal book ideas.
 
-основные сущности:
-- **пользователь** (user) — человек с аккаунтом в системе;
-- **книга** (book) — доступная к покупке книга;
-- **автор** (author) — автор книги;
-- **категория** (category) — жанр или раздел;
-- **издательство** (publisher) — издательство книги;
-- **отзыв** (review) — оценка и комментарий к книге;
-- **заказ** (order) — покупка одной или нескольких книг;
-- **позиция заказа** (orderitem) — одна книга в заказе с количеством и ценой;
-- **список желаемого** (wishlist) — книги, которые пользователь хочет купить позже;
-- **подборка** (collection) — пользовательская подборка книг с составом (collection_books);
-- **рекомендация** (recommendation) — предвычисленный результат алгоритма рекомендаций для пользователя.
+core entities:
+- **user** (user) — a person with an account in the system;
+- **book** (book) — a book you can buy;
+- **author** (author) — the author of a book;
+- **category** (category) — a genre or section;
+- **publisher** (publisher) — the publisher of a book;
+- **review** (review) — a rating and comment on a book;
+- **order** (order) — a purchase of one or more books;
+- **order item** (orderitem) — one book in an order, with its quantity and price;
+- **wishlist** (wishlist) — books the user wants to buy later;
+- **collection** (collection) — a book collection made by a user, with its books (collection_books);
+- **recommendation** (recommendation) — the saved result of the recommendation algorithm for a user.
 
-## описание акторов (ролей)
+## actors (roles)
 
-| актор | описание |
+| actor | description |
 |---|---|
-| **гость** (guest) | пользователь без аккаунта. может смотреть каталог, страницы книг, читать отзывы и пользоваться поиском. персонализированные рекомендации, а также заказы недоступны. |
-| **покупатель** (customer) | зарегистрированный пользователь. может заказывать книги, оставлять отзывы, получать персонализированные рекомендации и вести список желаемого. |
-| **модератор** (moderator) | сотрудник платформы. в дополнение к правам покупателя может редактировать карточки книг, удалять нарушающие правила отзывы и смотреть общую статистику. |
-| **администратор** (admin) | полный доступ ко всему: управление пользователями, ролями, каталогом, категориями, издательствами и авторами, сброс кэша, просмотр журнала действий. |
+| **guest** (guest) | a user without an account. can look at the catalog, book pages, read reviews and use search. cannot get personal book ideas or place orders. |
+| **customer** (customer) | a user with an account. can order books, leave reviews, get personal book ideas and keep a wishlist. |
+| **moderator** (moderator) | a staff member. has all customer rights, and can also edit book entries, delete reviews that break the rules, and see overall statistics. |
+| **admin** (admin) | full access to everything: managing users, roles, the catalog, categories, publishers and authors, clearing the cache, and viewing the action log. |
 
-## use-case диаграмма
+## use-case diagram
 
-![use-case](diagrams/images/use_case.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
-## er-диаграмма
+## er diagram
 
-![er](diagrams/images/er.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
-## пользовательские сценарии
+## user scenarios
 
-### сценарий 1: покупатель находит и заказывает книгу по рекомендации
+### scenario 1: a customer finds and orders a book from a recommendation
 
-**актор:** покупатель (авторизован)  
-**предусловие:** пользователь ранее оставил несколько отзывов и совершил покупки.  
-**основной поток:**
+**actor:** customer (authenticated)  
+**precondition:** the user has left some reviews and made some purchases before.  
+**main flow:**
 
-1. пользователь открывает раздел «рекомендации».
-2. система анализирует историю оценок и покупок пользователя и формирует персонализированный список книг.
-3. пользователь видит список рекомендованных книг с краткими аннотациями.
-4. пользователь выбирает книгу и переходит на её карточку.
-5. читает описание и отзывы других покупателей.
-6. нажимает «заказать».
-7. система регистрирует новый заказ со статусом «в обработке».
+1. the user opens the "recommendations" section.
+2. the system looks at the user's ratings and past purchases and builds a personal list of books.
+3. the user sees a list of suggested books with short notes.
+4. the user picks a book and opens its page.
+5. reads the description and reviews from other customers.
+6. clicks "order".
+7. the system makes a new order with the status "processing".
 
-**постусловие:** создан заказ, рекомендации при следующем обращении обновляются с учётом новой покупки.
+**postcondition:** an order is made. on the next request, the recommendations are updated to include the new purchase.
 
-### сценарий 2: покупатель оставляет отзыв на книгу
+### scenario 2: a customer leaves a review on a book
 
-**актор:** покупатель (авторизован)  
-**предусловие:** пользователь уже получил и прочитал заказанную книгу.  
-**основной поток:**
+**actor:** customer (authenticated)  
+**precondition:** the user has already got and read the ordered book.  
+**main flow:**
 
-1. пользователь открывает карточку книги и переходит в раздел «отзывы».
-2. заполняет форму: выбирает оценку (1–5 звёзд) и вводит текстовый комментарий.
-3. отправляет отзыв.
-4. система проверяет, оставлял ли пользователь отзыв на эту книгу ранее:
-   - нет — создаёт новый отзыв и пересчитывает средний рейтинг книги;
-   - да — обновляет существующий отзыв и пересчитывает рейтинг.
-5. отзыв появляется в списке на странице книги.
+1. the user opens the book page and goes to the "reviews" section.
+2. fills in the form: picks a rating (1–5 stars) and writes a comment.
+3. sends the review.
+4. the system checks if the user has reviewed this book before:
+   - no — it makes a new review and works out the book's average rating again;
+   - yes — it updates the old review and works out the rating again.
+5. the review shows up in the list on the book page.
 
-**постусловие:** отзыв сохранён, средний рейтинг книги обновлён, рекомендации пересчитываются при следующем обращении.
+**postcondition:** the review is saved, the book's average rating is updated, and the recommendations are worked out again on the next request.
 
-### сценарий 3: модератор удаляет нарушающий отзыв
+### scenario 3: a moderator deletes a violating review
 
-**актор:** модератор  
-**предусловие:** поступила жалоба на отзыв с оскорбительным содержанием.  
-**основной поток:**
+**actor:** moderator  
+**precondition:** someone has reported a review with offensive content.  
+**main flow:**
 
-1. модератор переходит в раздел управления отзывами.
-2. находит отзыв, нарушающий правила сервиса.
-3. нажимает «удалить отзыв» и подтверждает действие.
-4. система удаляет отзыв и пересчитывает средний рейтинг затронутой книги.
-5. модератор получает подтверждение об успешном удалении.
+1. the moderator opens the review management section.
+2. finds the review that breaks the service rules.
+3. clicks "delete review" and confirms.
+4. the system deletes the review and works out the average rating of that book again.
+5. the moderator gets a message that the delete worked.
 
-**постусловие:** отзыв удалён, рейтинг книги пересчитан, рекомендации обновляются при следующем обращении.
+**postcondition:** the review is deleted, the book's rating is worked out again, and the recommendations are updated on the next request.
 
-### сценарий 4: администратор сбрасывает устаревшие рекомендации
+### scenario 4: an admin clears stale recommendations
 
-**актор:** администратор  
-**предусловие:** в каталог добавлено большое количество новых книг, ранее сформированные рекомендации устарели.  
-**основной поток:**
+**actor:** admin  
+**precondition:** many new books have been added to the catalog, so the old recommendations are out of date.  
+**main flow:**
 
-1. администратор переходит в раздел управления системой.
-2. нажимает «сбросить кэш рекомендаций».
-3. система аннулирует ранее сохранённые рекомендации.
-4. администратор получает подтверждение операции.
-5. при следующем обращении система формирует рекомендации заново с учётом актуального каталога.
+1. the admin opens the system management section.
+2. clicks "clear the recommendation cache".
+3. the system drops the old saved recommendations.
+4. the admin gets a message that the action worked.
+5. on the next request, the system builds the recommendations again, using the current catalog.
 
-**постусловие:** устаревшие рекомендации удалены, пользователи получают актуальные персонализированные подборки.
+**postcondition:** the old recommendations are gone, and users get fresh personal lists.
 
-## бизнес-процессы (bpmn)
+## business processes (bpmn)
 
-### процесс 1: формирование рекомендаций
-![bpmn recomendations](diagrams/images/bpmn_recomendations.png)
+### process 1: building recommendations
+_Diagram is in the [Russian version](README.ru.md)._
 
-### процесс 2: оформление и обработка заказа
-![bpmn order](diagrams/images/bpmn_order.png)
+### process 2: placing and processing an order
+_Diagram is in the [Russian version](README.ru.md)._
 
 ## c4
 
 ### l1
-![c4 l1](diagrams/images/c4_l1.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
 ### l2
-![c4 l2](diagrams/images/c4_l2.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
 ### l3
-![c4 l3](diagrams/images/c4_l3.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
 ### l4 repository
-![c4 l4 repository](diagrams/images/c4_l4_repository.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
 ### l4 services
-![c4 l4 services](diagrams/images/c4_l4_services.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
-## диаграммы последовательностей
+## sequence diagrams
 
-### формирование персональных рекомендаций
-![sequence recommendations](diagrams/images/seq_recommendations.png)
+### building personal recommendations
+_Diagram is in the [Russian version](README.ru.md)._
 
-### оформление и обработка заказа
-![sequence order](diagrams/images/seq_order.png)
+### placing and processing an order
+_Diagram is in the [Russian version](README.ru.md)._
 
-## схема базы данных
+## database schema
 
-субд: **postgresql**.
-![schema](diagrams/images/schema.png)
+dbms: **postgresql**.
+_Diagram is in the [Russian version](README.ru.md)._
 
-## схемы алгоритмов функций
+## function algorithm flowcharts
 
 ### create interaction on rating
-![create interaction on rating](diagrams/images/create_interaction_on_rating.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
 ### update product by rating
-![update product by rating](diagrams/images/update_product_by_rating.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
 ### calculate recommendations
-![calculate recommendations](diagrams/images/calculate_recommendations.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
 ### get popular products by category
-![get popular products by category](diagrams/images/get_popular_products_by_category.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
 ### get user statistics
-![get user statistics](diagrams/images/get_user_statistics.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
-## структура проекта
+## project structure
 
 ```
 code/
@@ -222,19 +224,19 @@ diagrams/       исходники и png всех диаграмм (er, c4, bpm
 run.sh          локальный запуск без контейнеров приложения
 ```
 
-## стек
+## stack
 
 - backend: java 17, spring boot 3, spring security, spring data jpa;
-- база данных: postgresql 15 (основная; есть профиль mongodb);
-- кэш: redis 7;
-- frontend: react 18 + typescript (vite), в docker раздаётся через nginx;
-- инфраструктура: docker compose (postgres, redis, api, nginx).
+- database: postgresql 15 (main; there is a mongodb profile);
+- cache: redis 7;
+- frontend: react 18 + typescript (vite), served through nginx in docker;
+- infrastructure: docker compose (postgres, redis, api, nginx).
 
-## запуск
+## running
 
-### docker (рекомендуется)
+### docker (recommended)
 
-нужен docker (и `python3` для шага `seed`). одна команда собирает образы backend и frontend, поднимает postgres, redis, api и nginx с интерфейсом:
+you need docker (and `python3` for the `seed` step). one command builds the backend and frontend images and starts postgres, redis, api and nginx with the ui:
 
 ```bash
 ./code/run.sh start                         # = docker compose up -d --build
@@ -243,19 +245,19 @@ run.sh          локальный запуск без контейнеров п
 ./code/run.sh stop
 ```
 
-эквивалентно: `docker compose -f code/docker-compose.yml up -d --build`.
+this is the same as: `docker compose -f code/docker-compose.yml up -d --build`.
 
-после старта:
-- интерфейс — http://localhost:3000 (nginx, проксирует `/api` на backend)
+after it starts:
+- ui — http://localhost:3000 (nginx, sends `/api` to the backend)
 - rest api — http://localhost:8080
-- postgresql — localhost:5433 (бд `bookstore_db`)
+- postgresql — localhost:5433 (database `bookstore_db`)
 - redis — localhost:6379
 
-тестовый вход после `seed`: `admin` / `admin123`.
+test login after `seed`: `admin` / `admin123`.
 
-### локальная разработка
+### local development
 
-без контейнеров приложения (нужны java 17, maven, node/npm; postgres и redis поднимаются в docker). frontend собирается через vite прямо в статику spring boot, backend запускается локально и отдаёт api и интерфейс на http://localhost:8080:
+without the application containers (you need java 17, maven, node/npm; postgres and redis run in docker). the frontend is built with vite straight into spring boot's static resources. the backend runs locally and serves the api and ui at http://localhost:8080:
 
 ```bash
 ./run.sh start
@@ -263,60 +265,60 @@ run.sh          локальный запуск без контейнеров п
 ./run.sh stop
 ```
 
-## исследование
+## research
 
-### постановка исследования
+### research setup
 
-для измерений формируется набор данных, переключаются конфигурации индексов, запускаются серии измерений и сохраняются результаты вместе с планами `explain analyze`.
+for the tests, the script makes a dataset, switches between index setups, runs sets of measurements, and saves the results together with the `explain analyze` plans.
 
-после подготовки объём данных составил:
-- `users` — 1000 строк;
+after setup, the data size was:
+- `users` — 1000 rows;
 - `reviews` — 29480;
 - `orders` — 30000;
 - `order_items` — 30000.
 
-сравнивались варианты: без индексов, простые, составные, простые с составными, избыточные.
+these setups were compared: no indexes, simple, composite, simple plus composite, redundant.
 
-простые индексы строились для столбцов `category_id`, `user_id`, `created_at`, `avg_rating`, `order_id`, `publisher_id`.
-составные — для наборов `(category_id, book_id)`, `(user_id, rating)`, `(user_id, status, created_at)`, `(book_id, rating)`.
-избыточный набор добавлял индексы для `price`, `created_at`, `total_amount`.
+simple indexes were built for the columns `category_id`, `user_id`, `created_at`, `avg_rating`, `order_id`, `publisher_id`.
+composite ones — for the sets `(category_id, book_id)`, `(user_id, rating)`, `(user_id, status, created_at)`, `(book_id, rating)`.
+the redundant set added indexes for `price`, `created_at`, `total_amount`.
 
-набор измеряемых запросов:
-1. топ книг по категории (q1);
-2. отзывы пользователя с сортировкой по рейтингу (q2);
-3. заказы пользователя по дате (q3);
-4. агрегированная статистика рейтингов по категории (q4);
-5. история заказов пользователя с `join` по позициям (q5);
-6. запись: вставка заказа и позиции (с откатом транзакции) (q6).
+the queries that were measured:
+1. top books by category (q1);
+2. a user's reviews sorted by rating (q2);
+3. a user's orders by date (q3);
+4. rating statistics grouped by category (q4);
+5. a user's order history with a `join` on items (q5);
+6. write: inserting an order and an item (with a transaction rollback) (q6).
 
-для каждой пары «запрос-конфигурация» выполнялись 20 начальных и 250 измеряемых запусков.
-перед сериями выполнялись пересоздание индексов по конфигурации и `analyze`.
+for each "query-setup" pair, 20 warm-up runs and 250 measured runs were done.
+before each set, the indexes were rebuilt to match the setup and `analyze` was run.
 
-### результаты исследования
+### research results
 
-сводные метрики времени выполнения, мс:
+summary of run times, ms:
 
-| конфигурация индексов | среднее время чтения | среднее время записи |
+| index configuration | average read time | average write time |
 |---|---:|---:|
-| без индексов | 0.9068 | 5.7547 |
-| простые индексы | 0.8125 | 6.0368 |
-| составные индексы | 0.8525 | 6.0350 |
-| простые и составные индексы | 0.8144 | 6.0965 |
-| избыточная индексация | 0.8622 | 6.3980 |
+| no indexes | 0.9068 | 5.7547 |
+| simple indexes | 0.8125 | 6.0368 |
+| composite indexes | 0.8525 | 6.0350 |
+| simple and composite indexes | 0.8144 | 6.0965 |
+| redundant indexing | 0.8622 | 6.3980 |
 
-график среднего времени выполнения запросов `q1-q6`:
+chart of the average run time of queries `q1-q6`:
 
-![index research plots](diagrams/images/index_research_plots.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
-график зависимости среднего времени выполнения от числа индексов:
+chart of the average run time by number of indexes:
 
-![index research dependency plots](diagrams/images/index_research_dependency_plots.png)
+_Diagram is in the [Russian version](README.ru.md)._
 
-для запроса истории заказов с `join` в плане без индексов наблюдаются последовательные сканирования, а в вариантах с простыми индексами — чтение по индексам, что согласуется со снижением времени чтения в измерениях. при избыточной конфигурации среднее время чтения растёт относительно простых и комбинированных индексов: часть дополнительных индексов не используется в запросах, но увеличивает накладные расходы на планирование и обслуживание структур.
+for the order-history query with a `join`, the plan with no indexes uses sequential scans, while the setups with simple indexes use index reads. this matches the lower read time in the measurements. with the redundant setup, the average read time goes up compared to the simple and combined indexes: some extra indexes are not used in the queries but still make planning and upkeep cost more.
 
-### вывод
+### conclusion
 
-минимальное среднее время чтения получено для простых индексов — 0.8125 мс, для набора «простые и составные индексы» — 0.8144 мс, без индексов — 0.9068 мс.
-для записи минимальное среднее время составило 5.7547 мс без индексов; при наборе «простые и составные индексы» оно возрастает до 6.0965 мс, при избыточной индексации — до 6.3980 мс.
+the lowest average read time was with simple indexes — 0.8125 ms; for the "simple and composite indexes" set — 0.8144 ms; and with no indexes — 0.9068 ms.
+for writes, the lowest average time was 5.7547 ms with no indexes; with the "simple and composite indexes" set it goes up to 6.0965 ms, and with redundant indexing — to 6.3980 ms.
 
-индексы заметно ускоряют чтение (лучший результат у простых индексов) ценой роста времени записи; набор «простые и составные индексы» даёт время чтения, близкое к минимальному, при умеренной просадке записи.
+indexes make reads a lot faster (the best result is with simple indexes), but writes get slower. the "simple and composite indexes" set gives a read time close to the best, with only a small drop in write speed.

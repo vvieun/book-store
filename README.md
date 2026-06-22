@@ -235,7 +235,7 @@ run.sh          локальный запуск без контейнеров п
 
 ## persistence
 
-the backend follows a ports-and-adapters (clean architecture) layout: the services depend only on repository **interfaces** in `ru.bookstore.repository`, and the database is an interchangeable adapter. there are two complete implementations, picked by spring profile:
+the services depend only on repository **interfaces** in `ru.bookstore.repository`, and the database is an interchangeable adapter. there are two complete implementations, picked by spring profile:
 
 - **postgresql** (`repository/postgres`, `@Profile("postgres")`) — spring data jpa entities, entity mappers and jpa repositories;
 - **mongodb** (`repository/mongo`, `@Profile("mongo")`) — document models, mappers and spring data mongodb repositories (with a sequence service for numeric ids).

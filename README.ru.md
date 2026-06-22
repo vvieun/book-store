@@ -2,7 +2,7 @@
 
 # книжный магазин с системой рекомендаций
 
-учебный проект книжного магазина с backend на spring boot, frontend на react, базой данных postgresql и кэшем redis.
+учебный проект книжного магазина с backend на spring boot, frontend на react, кэшем redis и сменным слоем хранения — postgresql по умолчанию и готовой реализацией на mongodb, выбираемой spring-профилем.
 
 ## содержание
 
@@ -19,6 +19,7 @@
 - [схемы алгоритмов функций](#схемы-алгоритмов-функций)
 - [структура проекта](#структура-проекта)
 - [стек](#стек)
+- [хранение данных](#хранение-данных)
 - [запуск](#запуск)
 - [исследование](#исследование)
 
@@ -226,11 +227,25 @@ run.sh          локальный запуск без контейнеров п
 
 ## стек
 
-- backend: java 17, spring boot 3, spring security, spring data jpa;
-- база данных: postgresql 15 (основная; есть профиль mongodb);
+- backend: java 17, spring boot 3, spring security, spring data jpa / spring data mongodb;
+- база данных: postgresql 15 по умолчанию либо mongodb — см. [хранение данных](#хранение-данных);
 - кэш: redis 7;
 - frontend: react 18 + typescript (vite), в docker раздаётся через nginx;
 - инфраструктура: docker compose (postgres, redis, api, nginx).
+
+## хранение данных
+
+backend построен по схеме ports-and-adapters (чистая архитектура): сервисы зависят только от **интерфейсов** репозиториев в `ru.bookstore.repository`, а база данных — сменный адаптер. есть две полные реализации, выбираемые spring-профилем:
+
+- **postgresql** (`repository/postgres`, `@Profile("postgres")`) — сущности spring data jpa, мапперы сущностей и jpa-репозитории;
+- **mongodb** (`repository/mongo`, `@Profile("mongo")`) — документные модели, мапперы и репозитории spring data mongodb (с сервисом последовательностей для числовых id).
+
+переключение хранилища — это смена профиля, без изменений в сервисах, контроллерах, dto и доменном коде:
+
+- по умолчанию (postgres): `SPRING_PROFILES_ACTIVE=web,postgres` (значение из docker compose);
+- mongodb: `SPRING_PROFILES_ACTIVE=web,mongo`, при этом `spring.data.mongodb.uri` указывает на инстанс mongodb (по умолчанию `mongodb://localhost:27017/bookstore`).
+
+профиль `mongo` дополнительно отключает автоконфигурацию jpa/datasource (см. `application-mongo.properties`), поэтому приложение работает только с mongodb. docker compose из коробки поднимает postgresql; чтобы запустить на mongodb, поднимите инстанс mongodb (локально или отдельным сервисом compose) и активируйте профиль `mongo`.
 
 ## запуск
 

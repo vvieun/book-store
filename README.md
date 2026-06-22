@@ -2,7 +2,7 @@
 
 # bookstore with a recommendation system
 
-a bookstore with a spring boot backend, a react frontend, a postgresql database and a redis cache.
+a bookstore with a spring boot backend, a react frontend, a redis cache and a pluggable persistence layer — postgresql by default, with a drop-in mongodb implementation selected by a spring profile.
 
 ## contents
 
@@ -19,6 +19,7 @@ a bookstore with a spring boot backend, a react frontend, a postgresql database 
 - [function algorithm flowcharts](#function-algorithm-flowcharts)
 - [project structure](#project-structure)
 - [stack](#stack)
+- [persistence](#persistence)
 - [running](#running)
 - [research](#research)
 
@@ -226,11 +227,25 @@ run.sh          локальный запуск без контейнеров п
 
 ## stack
 
-- backend: java 17, spring boot 3, spring security, spring data jpa;
-- database: postgresql 15 (main; there is a mongodb profile);
+- backend: java 17, spring boot 3, spring security, spring data jpa / spring data mongodb;
+- database: postgresql 15 by default, or mongodb — see [persistence](#persistence);
 - cache: redis 7;
 - frontend: react 18 + typescript (vite), served through nginx in docker;
 - infrastructure: docker compose (postgres, redis, api, nginx).
+
+## persistence
+
+the backend follows a ports-and-adapters (clean architecture) layout: the services depend only on repository **interfaces** in `ru.bookstore.repository`, and the database is an interchangeable adapter. there are two complete implementations, picked by spring profile:
+
+- **postgresql** (`repository/postgres`, `@Profile("postgres")`) — spring data jpa entities, entity mappers and jpa repositories;
+- **mongodb** (`repository/mongo`, `@Profile("mongo")`) — document models, mappers and spring data mongodb repositories (with a sequence service for numeric ids).
+
+switching the store is just a profile change — no service, controller, dto or domain code is touched:
+
+- default (postgres): `SPRING_PROFILES_ACTIVE=web,postgres` (the value docker compose uses);
+- mongodb: `SPRING_PROFILES_ACTIVE=web,mongo`, with `spring.data.mongodb.uri` pointing at a mongodb instance (default `mongodb://localhost:27017/bookstore`).
+
+the `mongo` profile also disables the jpa/datasource auto-configuration (see `application-mongo.properties`), so the app runs against mongodb alone. docker compose provisions postgresql out of the box; to run on mongodb, start a mongodb instance (locally or as an extra compose service) and activate the `mongo` profile.
 
 ## running
 
